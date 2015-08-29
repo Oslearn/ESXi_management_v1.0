@@ -1,0 +1,175 @@
+#! /bin/bash
+# Programming and idea by : E2MA3N [Iman Homayouni]
+# Email : e2ma3n@Gmail.com
+# Website : http://OSLearn.ir
+# License : GPL v3.0
+# ESXi management v1.0
+#####################################################
+src="$2" #path to upload
+IP="" #ESXi server ip addres
+password="" #ESXi password
+datastor="" #ESXi iso's path, example: /vmfs/volumes/500-GiB/iso/
+
+function info {
+echo '[+] ------------------------------------------------------------------- [+]'
+echo -e "[+] Programming and idea by : \e[1mE2MA3N [Iman Homayouni]\e[0m"
+echo '[+] License : GPL v3.0'
+echo '[+] ESXi management v1.0' ; echo ""
+}
+
+function reboot { reset ; info
+echo -e "\e[1m[+] Rebooting ESXi Server\e[0m ( $IP )"
+sshpass -p $password ssh -o StrictHostKeyChecking=no root@$IP "reboot" &> /dev/null
+if [ "$?" = "0" ];then
+	echo -e "\e[92m[+] Done\e[0m"
+	echo "[+] ------------------------------------------------------------------- [+]"
+else
+	echo -e "\e[91m[+] Error\e[0m"
+	echo "[+] ------------------------------------------------------------------- [+]"
+fi
+}
+
+function shutdown { reset ; info
+echo -e "\e[1m[+] Shuting down ESXi Server\e[0m ( $IP )"
+sshpass -p $password ssh -o StrictHostKeyChecking=no root@$IP "shutdown.sh && /sbin/poweroff" &> /dev/null
+if [ "$?" = "0" ];then
+	echo -e "\e[92m[+] Done\e[0m"
+	echo "[+] ------------------------------------------------------------------- [+]"
+else
+	echo -e "\e[91m[+] Error\e[0m"
+	echo "[+] ------------------------------------------------------------------- [+]"
+fi
+}
+
+function mini-help {
+echo "Usage: esxi [-h help]"
+}
+
+function help {
+echo "Usage: esxi [-0 shutdown] [-6 reboot] [-s status] [-v control vms] [-u up iso] [-h help]"
+echo '	-0	Shuting down ESXi Server'
+echo '	-6	Rebooting ESXi Server'
+echo '	-s	ESXi Server status'
+echo '	-v	Control (start, stop and ...) vms'
+echo '	-u	Upload iso file to datastor'
+echo '	-h	help'
+echo 'Example:'
+echo '	esxi -6'
+echo '	esxi -s'
+echo '	esxi -v'
+echo '	esxi -u /home/Linux/iso/CentOS.iso'
+}
+
+function status {
+for (( i=0 ; ; i++ )) ; do
+reset ; info
+echo -e "\e[1m[+] Ping from ESXi Server\e[0m ( $IP )"
+ping $IP -c 4 &> /dev/null
+if [ "$?" = "0" ];then
+
+	echo -e "\e[92m[+] ESXi Server is UP\e[0m" ; echo ""
+	echo -e "\e[1m[+] Check ESXi ssh service\e[0m ( $IP )"
+	nc $IP 22 -w 3 &> /dev/null
+	if [ "$?" = "0" ];then
+		echo -e "\e[92m[+] ESXi ssh service is active\e[0m"
+		echo "[+] ------------------------------------------------------------------- [+]" ; exit 0
+	else
+		echo -e "\e[91m[+] ESXi ssh service is inactive\e[0m"
+		echo "[+] ------------------------------------------------------------------- [+]" ; sleep 5
+	fi
+else
+
+	echo -e "\e[91m[+] ESXi Server is Down\e[0m"
+	echo "[+] ------------------------------------------------------------------- [+]"
+	sleep 5
+fi ; done
+}
+
+# vmware function
+function vms {
+
+# clear terminal
+reset
+
+# run info function
+info
+
+# check host is avalible
+ping $ip_address -c 4 &> /dev/null
+if [ "$?" = "1" ]; then
+	echo -e "[+] Server is \e[91mOFF\e[0m" ; echo ''
+	echo '[+] ------------------------------------------------------------------- [+]'
+	exit 1
+fi
+
+# main loop
+for (( j=0 ; ; j++ )) ; do
+
+# show list of running vms
+echo '[+] List of running vms : ' ; echo -e "\e[93m"
+vmrun -T server -h https://$IP/sdk -u root -p $password list
+
+# check connection
+if [ "$?" != "0" ];then
+	echo -e "\e[39m[+] ------------------------------------------------------------------- [+]" ; exit
+fi ; echo ''
+
+# show list of all vms
+vmrun -T server -h https://$IP/sdk -u root -p $password listregisteredvm > /tmp/listregisteredvm.txt
+cat -n /tmp/listregisteredvm.txt
+
+# select vms for more control
+echo '' ; echo -en "\e[39m[+] Select number of vm (type exit to quit) : " ; read main2
+
+# check input
+re='^[0-9]+$'
+if [ "$main2" = "1" ];then
+	echo '[+] Error : no vm selected'
+	echo '[+] ------------------------------------------------------------------- [+]' ; exit
+elif [ "$main2" = "$re" ];then
+	echo '[+] Error : no vm selected'
+	echo '[+] ------------------------------------------------------------------- [+]' ; exit
+elif [ "$main2" = "exit" ];then
+	echo '[+] ------------------------------------------------------------------- [+]' ; exit
+fi
+
+# doing more control on vm
+var=`cat /tmp/listregisteredvm.txt | head -n $main2 | tail -n 1`
+echo -e "[+] You selected \e[1m$var\e[0m"
+echo '[+]'
+echo "[+] 1.start vm"
+echo "[+] 2.stop vm"
+echo "[+] 3.return to menu"
+echo "[+] 4.exit"
+echo '[+]'
+echo -n "[+] Enter number : " ; read main3
+case $main3 in
+	1) vmrun -T server -h https://$IP/sdk -u root -p $password start "$var" ;;
+	2) vmrun -T server -h https://$IP/sdk -u root -p $password stop "$var" ;;
+	3) sleep 1 ;;
+	*) echo '[+] ------------------------------------------------------------------- [+]' ; exit ;;
+esac ; sleep 3 ; reset ; done
+}
+
+function upload { reset ; info
+echo -n "[+] ESXi " ; scp -r $src root@$IP:$datastor
+if [ "$?" = "0" ];then
+	echo ''
+	echo -e "\e[92m[+] Uploaded\e[0m"
+	echo '[+] ------------------------------------------------------------------- [+]'
+else
+	echo ''
+	echo -e "\e[93m[+] Error\e[0m"
+	echo '[+] ------------------------------------------------------------------- [+]'
+fi
+}
+
+case $1 in
+	-6) reboot ;;
+	-0) shutdown ;;
+	-h) help ;;
+	-s) status ;;
+	-v) vms ;;
+	-u) upload ;;
+	*) mini-help ;;
+esac
