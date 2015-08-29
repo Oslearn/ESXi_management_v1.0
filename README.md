@@ -1,6 +1,6 @@
 # ESXi_management_v1.0
 ESXi management v1.0
-Programming and idea by : E2MA3N [Iman Homayouni]
+Programming and idea by : E2MA3N [Iman Homayouni] <br>
 Email : e2ma3n@Gmail.com
 Website : http://OSLearn.ir
 License : GPL v3.0
@@ -18,7 +18,7 @@ Install:
 	1. cp esxi /usr/bin/esxi
 
 Usage:
-	1. esxi -h #help
+	1. esxi -h #help<br>
 	2. esxi -s #ESXi Server status
 	3. esxi -0 #Shuting down ESXi Server
 	4. esxi -6 #Rebooting ESXi Server
