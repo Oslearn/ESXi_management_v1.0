@@ -1,11 +1,10 @@
 # ESXi_management_v1.0
 ESXi management v1.0
-#! /bin/bash
-# Programming and idea by : E2MA3N [Iman Homayouni]
-# Email : e2ma3n@Gmail.com
-# Website : http://OSLearn.ir
-# License : GPL v3.0
-# ESXi management v1.0
+Programming and idea by : E2MA3N [Iman Homayouni]
+Email : e2ma3n@Gmail.com
+Website : http://OSLearn.ir
+License : GPL v3.0
+
 
 Dependencies:
 	1. sshpass
